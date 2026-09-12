@@ -1,0 +1,9 @@
+<!-- This is a placeholder - in a real app, you would have actual PNG icons -->
+<!-- For demonstration, we're showing what the file would contain -->
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#667eea"/>
+  <circle cx="96" cy="96" r="60" fill="#764ba2"/>
+  <text x="96" y="110" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="48" font-weight="bold">S</text>
+  <text x="96" y="150" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24">Msg</text>
+</svg>

@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Messenger</title>
+    <link rel="manifest" href="./manifest.json">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.2);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header .status {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: rgba(0, 0, 0, 0.15);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar h2 {
+            padding: 1rem;
+            color: white;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .users-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin: 0.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .user-item:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .user-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-left: 3px solid #4facfe;
+        }
+
+        .user-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: white;
+        }
+
+        .user-status {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-top: 0.25rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h2 {
+            margin: 0;
+            color: #333;
+        }
+
+        .chat-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #5a6268;
+        }
+
+        .control-btn.call {
+            background: #28a745;
+        }
+
+        .control-btn.call:hover {
+            background: #218838;
+        }
+
+        .control-btn.video {
+            background: #dc3545;
+        }
+
+        .control-btn.video:hover {
+            background: #c82333;
+        }
+
+        .control-btn.attach {
+            background: #6f42c1;
+        }
+
+        .control-btn.attach:hover {
+            background: #5a32a3;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 70%;
+            word-wrap: break-word;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-content {
+            position: relative;
+            max-width: 100%;
+        }
+
+        .message.sent .message-content {
+            background: #007bff;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .message.received .message-content {
+            background: #e9ecef;
+            color: #333;
+            padding: 0.75rem 1rem;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        .message-text {
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+
+        .message-media {
+            max-width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .message-media img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .message-media video {
+            width: 100%;
+            height: auto;
+            display: block;
+            controls;
+        }
+
+        .message-file {
+            background: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .message-file-icon {
+            font-size: 2rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-file-name {
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .message-file-size {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
+            text-align: right;
+        }
+
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 12px;
+        }
+
+        .reaction-btn {
+            background: none;
+            border: none;
+            padding: 0.25rem;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .reaction-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .reaction-count {
+            font-size: 0.8rem;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-style: italic;
+            padding: 0.5rem 1rem;
+        }
+
+        .input-container {
+            padding: 1rem;
+            border-top: 1px solid #e9ecef;
+            background: white;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        #message-input:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+        }
+
+        .send-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .send-btn:hover {
+            background: #218838;
+        }
+
+        .attach-input {
+            display: none;
+        }
+
+        .call-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            min-width: 200px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+
+        .call-status.active {
+            display: block;
+        }
+
+        .call-status h3 {
+            margin: 0 0 0.5rem 0;
+        }
+
+        .call-status .indicators {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 0.5rem;
+        }
+
+        .indicator {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .indicator-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .indicator-value {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .encryption-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(40, 167, 69, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1000;
+        }
+
+        /* Group chat badge */
+        .group-badge {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            margin-left: 0.5rem;
+        }
+
+        /* Reaction picker */
+        .reaction-picker {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 1000;
+            margin-bottom: 0.5rem;
+        }
+
+        .reaction-picker button {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reaction-picker button:hover {
+            background: #f8f9fa;
+            transform: scale(1.1);
+        }
+
+        /* Media preview */
+        .media-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+
+        .media-preview.active {
+            display: flex;
+        }
+
+        .media-preview-content {
+            max-width: 90%;
+            max-height: 80vh;
+            position: relative;
+        }
+
+        .media-preview-content img {
+            max-width: 100%;
+            max-height: 100vh;
+            border-radius: 8px;
+        }
+
+        .media-preview-content video {
+            max-width: 100%;
+            max-height: 100vh;
+            border-radius: 8px;
+            controls;
+        }
+
+        .media-preview-close {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+
+            .user-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 60px;
+                flex-direction: row;
+            }
+
+            .sidebar h2 {
+                display: none;
+            }
+
+            .users-list {
+                display: flex;
+                overflow-x: auto;
+                padding: 0.5rem;
+            }
+
+            .user-item {
+                flex: 0 0 auto;
+            }
+
+            .chat-container {
+                height: calc(100vh - 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 Secure Messenger</h1>
+        <div class="status" id="connection-status">Connecting...</div>
+    </div>
+
+    <div class="main">
+        <div class="sidebar">
+            <h2>Chats</h1>
+            <div class="users-list" id="users-list">
+                <!-- Users and groups will be populated here -->
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2 id="chat-with">Select a contact</h2>
+                <div class="chat-controls">
+                    <button class="control-btn attach" id="attach-btn" title="Attach File">
+                        📎
+                    </button>
+                    <button class="control-btn call" id="call-btn" title="Voice Call">
+                        📞
+                    </button>
+                    <button class="control-btn video" id="video-btn" title="Video Call">
+                        🎥
+                    </button>
+                </div>
+            </div>
+
+            <div class="messages" id="messages">
+                <!-- Messages will appear here -->
+                <div class="message received">
+                    <div class="message-content">
+                        <div class="message-text">Welcome to Secure Messenger! Your messages are encrypted end-to-end.</div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+                <input type="file" id="attach-input" accept="image/*,video/*">
+                <button class="send-btn" id="send-btn">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="call-status" id="call-status">
+        <h3 id="call-title">Call in Progress</h3>
+        <div class="indicators">
+            <div class="indicator">
+                <div class="indicator-label">Duration</div>
+                <div class="indicator-value" id="call-duration">00:00</div>
+            </div>
+            <div class="indicator">
+                <div class="indicator-label">Status</div>
+                <div class="indicator-value" id="call-status-text">Connected</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="encryption-badge">
+        🔒 End-to-End Encrypted
+    </div>
+
+    <!-- Media Preview -->
+    <div class="media-preview" id="media-preview">
+        <div class="media-preview-content">
+            <!-- Image or video will be inserted here -->
+        </div>
+        <button class="media-preview-close" id="media-preview-close">&times;</button>
+    </div>
+
+    <script>
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // Secure Messenger Client
+        class SecureMessenger {
+            constructor() {
+                this.clientId = Math.random().toString(36).substring(2, 9);
+                this.username = `User_${this.clientId}`;
+                this.socket = null;
+                this.rooms = new Map(); // roomId -> room object
+                this.currentRoom = null;
+                this.encryptionKeys = null;
+                this.reactionPickers = new Map(); // messageId -> picker element
+                this.init();
+            }
+
+            init() {
+                this.setupUI();
+                this.setupSocket();
+                this.generateEncryptionKeys();
+                this.joinDemoRoom();
+            }
+
+            setupUI() {
+                const statusEl = document.getElementById('connection-status');
+                const sendBtn = document.getElementById('send-btn');
+                const messageInput = document.getElementById('message-input');
+                const attachBtn = document.getElementById('attach-btn');
+                const attachInput = document.getElementById('attach-input');
+                const callBtn = document.getElementById('call-btn');
+                const videoBtn = document.getElementById('video-btn');
+                const mediaPreview = document.getElementById('media-preview');
+                const mediaPreviewClose = document.getElementById('media-preview-close');
+
+                sendBtn.addEventListener('click', () => this.sendMessage());
+                messageInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.sendMessage();
+                });
+                messageInput.addEventListener('input', () => this.handleTyping());
+                attachBtn.addEventListener('click', () => attachInput.click());
+                attachInput.addEventListener('change', (e) => this.handleFileSelect(e));
+                callBtn.addEventListener('click', () => this.startCall(false));
+                videoBtn.addEventListener('click', () => this.startCall(true));
+                mediaPreviewClose.addEventListener('click', () => {
+                    mediaPreview.classList.remove('active');
+                });
+
+                // Close media preview when clicking outside
+                mediaPreview.addEventListener('click', (e) => {
+                    if (e.target === mediaPreview) {
+                        mediaPreview.classList.remove('active');
+                    }
+                });
+
+                // Auto-focus input
+                messageInput.focus();
+            }
+
+            setupSocket() {
+                // In a real app, this would connect to your signaling server
+                // For this demo, we'll simulate with mock data
+                this.socket = {
+                    emit: (event, data) => {
+                        console.log(`Socket emit: ${event}`, data);
+                        // Simulate server response
+                        setTimeout(() => {
+                            if (event === 'join-room') {
+                                this.onJoinedRoom(data);
+                            } else if (event === 'send-message') {
+                                this.onReceivedMessage({
+                                    senderId: 'demo-user',
+                                    senderName: 'Demo User',
+                                    text: data.text,
+                                    type: data.type,
+                                    mediaUrl: data.mediaUrl,
+                                    timestamp: Date.now()
+                                });
+                            } else if (event === 'typing') {
+                                // Handle typing simulation
+                            }
+                        }, 500);
+                    },
+                    on: (event, callback) => {
+                        this.socketListeners = this.socketListeners || {};
+                        this.socketListeners[event] = callback;
+                    }
+                };
+
+                // Mock connection status update
+                setTimeout(() => {
+                    document.getElementById('connection-status').textContent = 'Online';
+                    document.getElementById('connection-status').style.color = '#28a745';
+                }, 1000);
+            }
+
+            generateEncryptionKeys() {
+                // In a real implementation, we'd use libsodium or similar
+                // For this demo, we'll simulate key generation
+                this.encryptionKeys = {
+                    publicKey: `pub_${Math.random().toString(36).substring(2, 15)}`,
+                    privateKey: `priv_${Math.random().toString(36).substring(2, 15)}`
+                };
+                console.log('Encryption keys generated');
+            }
+
+            joinDemoRoom() {
+                // Add some demo users and groups
+                const usersList = document.getElementById('users-list');
+
+                // Clear existing items
+                usersList.innerHTML = '';
+
+                // Add demo individual users
+                const demoUsers = [
+                    { id: 'user1', name: 'Alice', status: 'online', type: 'user' },
+                    { id: 'user2', name: 'Bob', status: 'offline', type: 'user' },
+                    { id: 'user3', name: 'Charlie', status: 'online', type: 'user' }
+                ];
+
+                // Add demo groups
+                const demoGroups = [
+                    { id: 'group1', name: 'Family', status: '2 online', type: 'group', members: 4 },
+                    { id: 'group2', name: 'Work Team', status: '3 online', type: 'group', members: 5 }
+                ];
+
+                // Add users
+                demoUsers.forEach(user => {
+                    const userEl = this.createUserElement(user);
+                    usersList.appendChild(userEl);
+                });
+
+                // Add groups
+                demoGroups.forEach(group => {
+                    const groupEl = this.createGroupElement(group);
+                    usersList.appendChild(groupEl);
+                });
+
+                // Select first item by default
+                const firstItem = usersList.firstElementChild;
+                if (firstItem) {
+                    this.selectChat(firstItem);
+                }
+            }
+
+            createUserElement(user) {
+                const userEl = document.createElement('div');
+                userEl.className = 'user-item';
+                userEl.dataset.userId = user.id;
+                userEl.dataset.userType = user.type;
+                userEl.innerHTML = `
+                    <div class="user-icon">${user.name.charAt(0)}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.name}</div>
+                        <div class="user-status">${user.status === 'online' ? '● Online' : '○ Offline'}</div>
+                    </div>
+                `;
+                userEl.addEventListener('click', () => this.selectUser(user));
+                return userEl;
+            }
+
+            createGroupElement(group) {
+                const groupEl = document.createElement('div');
+                groupEl.className = 'user-item';
+                groupEl.dataset.userId = group.id;
+                groupEl.dataset.userType = group.type;
+                groupEl.innerHTML = `
+                    <div class="user-icon">${group.name.charAt(0)}</div>
+                    <div class="user-info">
+                        <div class="user-name">${group.name}</div>
+                        <div class="user-status">${group.status}</div>
+                        <div class="group-badge">${group.members} members</div>
+                    </div>
+                `;
+                groupEl.addEventListener('click', () => this.selectGroup(group));
+                return groupEl;
+            }
+
+            selectChat(element) {
+                // Update active state
+                document.querySelectorAll('.user-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                element.classList.add('active');
+
+                // Determine if it's a user or group
+                const type = element.dataset.userType;
+                const id = element.dataset.userId;
+                const nameElement = element.querySelector('.user-name');
+                const name = nameElement ? nameElement.textContent : 'Unknown';
+
+                // Update chat header
+                document.getElementById('chat-with').textContent = name;
+
+                if (type === 'user') {
+                    this.currentRoom = { id, name, type: 'user' };
+                } else {
+                    this.currentRoom = { id, name, type: 'group' };
+                }
+
+                // Load chat history (demo)
+                this.loadChatHistory();
+            }
+
+            selectUser(user) {
+                this.selectChat(document.querySelector(`.user-item[data-user-id="${user.id}"]`));
+            }
+
+            selectGroup(group) {
+                this.selectChat(document.querySelector(`.user-item[data-user-id="${group.id}"]`));
+            }
+
+            loadChatHistory() {
+                const messagesEl = document.getElementById('messages');
+                messagesEl.innerHTML = `
+                    <div class="message received">
+                        <div class="message-content">
+                            <div class="message-text">Welcome to Secure Messenger! Your messages are encrypted end-to-end.</div>
+                            <div class="message-time">Just now</div>
+                        </div>
+                    </div>
+                `;
+                // Scroll to bottom
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            sendMessage() {
+                const input = document.getElementById('message-input');
+                const text = input.value.trim();
+                if (!text && !this.pendingMedia) return;
+
+                if (!this.currentRoom) {
+                    alert('Please select a chat to send messages to');
+                    return;
+                }
+
+                // Encrypt message (demo - in real app, use proper encryption)
+                const encryptedText = this.encryptMessage(text);
+
+                // Add to UI
+                this.addMessage({
+                    text,
+                    encrypted: encryptedText,
+                    type: this.pendingMedia ? this.pendingMedia.type : 'text',
+                    mediaUrl: this.pendingMedia ? this.pendingMedia.url : null,
+                    sender: 'you',
+                    timestamp: Date.now()
+                }, true);
+
+                // Simulate sending via socket
+                this.socket.emit('send-message', {
+                    roomId: this.currentRoom.id,
+                    text: encryptedText,
+                    type: this.pendingMedia ? this.pendingMedia.type : 'text',
+                    mediaUrl: this.pendingMedia ? this.pendingMedia.url : null
+                });
+
+                // Clear input and pending media
+                input.value = '';
+                this.pendingMedia = null;
+                const attachInput = document.getElementById('attach-input');
+                attachInput.value = '';
+                input.focus();
+            }
+
+            encryptMessage(text) {
+                // Simple demo encryption - in real app use libsodium or similar
+                // This is just for demonstration - NOT secure for real use!
+                return btoa(unescape(encodeURIComponent(text)));
+            }
+
+            decryptMessage(encryptedText) {
+                // Simple demo decryption
+                try {
+                    return decodeURIComponent(escape(atob(encryptedText)));
+                } catch (e) {
+                    return '[Decryption Error]';
+                }
+            }
+
+            addMessage(data, isSent = false) {
+                const messagesEl = document.getElementById('messages');
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
+
+                let messageContent = `
+                    <div class="message-content">
+                `;
+
+                if (data.type === 'text') {
+                    messageContent += `
+                        <div class="message-text">${isSent ? data.text : this.decryptMessage(data.encrypted)}</div>
+                    `;
+                } else if (data.type === 'image' || data.type === 'video') {
+                    messageContent += `
+                        <div class="message-media">
+                            ${data.type === 'video'
+                                ? `<video controls src="${data.mediaUrl}"></video>`
+                                : `<img src="${data.mediaUrl}" alt="Shared image">`}
+                        </div>
+                    `;
+                } else if (data.type === 'file') {
+                    messageContent += `
+                        <div class="message-file">
+                            <div class="message-file-icon">📎</div>
+                            <div class="message-file-name">${data.fileName || 'file'}</div>
+                            <div class="message-file-size">${this.formatFileSize(data.fileSize || 0)}</div>
+                        </div>
+                    `;
+                }
+
+                messageContent += `
+                        <div class="message-time">${new Date(data.timestamp).toLocaleTimeString()}</div>
+                        <div class="message-reactions" data-message-id="${Date.now()}-${Math.random()}">
+                            <!-- Reactions will be populated here -->
+                        </div>
+                    </div>
+                `;
+
+                messageEl.innerHTML = messageContent;
+                messagesEl.appendChild(messageEl);
+
+                // Add reaction functionality
+                const reactionsEl = messageEl.querySelector('.message-reactions');
+                reactionsEl.addEventListener('click', (e) => this.handleReactionClick(e, reactionsEl));
+
+                // Scroll to bottom
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Check file type
+                if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                    alert('Please select an image or video file');
+                    return;
+                }
+
+                // Check file size (limit to 5MB for demo)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const url = e.target.result;
+                    this.pendingMedia = {
+                        type: file.type.startsWith('image/') ? 'image' : 'video',
+                        url: url,
+                        fileName: file.name,
+                        fileSize: file.size
+                    };
+
+                    // Update button to show media is attached
+                    const attachBtn = document.getElementById('attach-btn');
+                    attachBtn.innerHTML = '✅';
+                    setTimeout(() => {
+                        attachBtn.innerHTML = '📎';
+                    }, 1500);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            handleTyping() {
+                const input = document.getElementById('message-input');
+                const isTyping = input.value.length > 0;
+                // In real app: socket.emit('typing', { roomId: this.currentRoom.id, isTyping });
+                console.log(`Typing: ${isTyping}`);
+            }
+
+            startCall(isVideo) {
+                if (!this.currentRoom) {
+                    alert('Please select a chat to call');
+                    return;
+                }
+
+                const callStatusEl = document.getElementById('call-status');
+                const callTitleEl = document.getElementById('call-title');
+                const durationEl = document.getElementById('call-duration');
+                const statusTextEl = document.getElementById('call-status-text');
+
+                callTitleEl.textContent = isVideo ? 'Video Call' : 'Voice Call';
+                statusTextEl.textContent = 'Connecting...';
+                callStatusEl.classList.add('active');
+
+                // Simulate call connection
+                setTimeout(() => {
+                    statusTextEl.textContent = 'Connected';
+                    this.startCallTimer(durationEl);
+                }, 1500);
+
+                // In real app: Initialize WebRTC peer connection here
+                console.log(`Starting ${isVideo ? 'video' : 'voice'} call with ${this.currentRoom.name}`);
+            }
+
+            startCallTimer(durationEl) {
+                let seconds = 0;
+                const updateTimer = () => {
+                    seconds++;
+                    const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+                    const secs = String(seconds % 60).padStart(2, '0');
+                    durationEl.textContent = `${mins}:${secs}`;
+                    this.callTimer = setTimeout(updateTimer, 1000);
+                };
+                updateTimer();
+            }
+
+            endCall() {
+                if (this.callTimer) {
+                    clearTimeout(this.callTimer);
+                }
+                document.getElementById('call-status').classList.remove('active');
+                // In real app: Close WebRTC peer connections
+                console.log('Call ended');
+            }
+
+            handleReactionClick(event, reactionsEl) {
+                // Prevent triggering when clicking on reaction count or emoji
+                if (event.target.classList.contains('reaction-count') ||
+                    event.target.classList.contains('reaction-emoji')) {
+                    return;
+                }
+
+                // Show reaction picker
+                this.showReactionPicker(event, reactionsEl);
+            }
+
+            showReactionPicker(event, reactionsEl) {
+                // Hide any existing pickers
+                this.hideAllReactionPickers();
+
+                // Create reaction picker
+                const picker = document.createElement('div');
+                picker.className = 'reaction-picker';
+                picker.innerHTML = `
+                    <button data-emoji="👍">👍</button>
+                    <button data-emoji="❤️">❤️</button>
+                    <button data-emoji="😂">😂</button>
+                    <button data-emoji="😮">😮</button>
+                    <button data-emoji="😢">😢</button>
+                    <button data-emoji="👏">👏</button>
+                `;
+
+                // Position picker near the message
+                const rect = reactionsEl.getBoundingClientRect();
+                picker.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                picker.style.left = `${rect.left + window.scrollX}px`;
+
+                // Add event listeners to reaction buttons
+                picker.querySelectorAll('button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const emoji = button.getAttribute('data-emoji');
+                        this.addReaction(reactionsEl, emoji);
+                        this.hideAllReactionPickers();
+                    });
+                });
+
+                document.body.appendChild(picker);
+                this.reactionPickers.set(reactionsEl, picker);
+            }
+
+            hideAllReactionPickers() {
+                this.reactionPickers.forEach(picker => {
+                    if (picker.parentNode) {
+                        picker.parentNode.removeChild(picker);
+                    }
+                });
+                this.reactionPickers.clear();
+            }
+
+            addReaction(reactionsEl, emoji) {
+                // Check if reaction already exists
+                let existingReaction = reactionsEl.querySelector(`.reaction-btn[data-emoji="${emoji}"]`);
+
+                if (existingReaction) {
+                    // Increment count
+                    const countEl = existingReaction.querySelector('.reaction-count');
+                    let count = parseInt(countEl.textContent) || 1;
+                    countEl.textContent = count + 1;
+                } else {
+                    // Add new reaction
+                    const reactionBtn = document.createElement('button');
+                    reactionBtn.className = 'reaction-btn';
+                    reactionBtn.setAttribute('data-emoji', emoji);
+                    reactionBtn.innerHTML = `
+                        <span class="reaction-emoji">${emoji}</span>
+                        <span class="reaction-count">1</span>
+                    `;
+                    reactionsEl.appendChild(reactionBtn);
+                }
+
+                // Simulate sending reaction to server
+                const messageId = reactionsEl.closest('.message')?.querySelector('.message-reactions')?.getAttribute('data-message-id') || 'unknown';
+                console.log(`Added reaction ${emoji} to message ${messageId}`);
+
+                // In real app: socket.emit('add-reaction', { roomId: this.currentRoom.id, messageId, emoji });
+            }
+
+            // Media preview functionality
+            previewMedia(url, type) {
+                const mediaPreview = document.getElementById('media-preview');
+                const mediaPreviewContent = document.getElementById('media-preview-content');
+
+                // Clear previous content
+                mediaPreviewContent.innerHTML = '';
+
+                if (type === 'image') {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    mediaPreviewContent.appendChild(img);
+                } else if (type === 'video') {
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = url;
+                    mediaPreviewContent.appendChild(video);
+                }
+
+                mediaPreview.classList.add('active');
+            }
+
+            // Utility function to format file size
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        }
+
+        // Initialize app when loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.messenger = new SecureMessenger();
+        });
+    </script>
+</body>
+</html>
